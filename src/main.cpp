@@ -1,23 +1,30 @@
-#include <H5Cpp.h>
+#include <mpi.h>
+#include <hdf5.h>
+#include <iostream>
 #include <vector>
 
-int main() {
-    const std::string fileName = "simulation_data.h5";
-    const std::string datasetName = "simulation";
+void check_hdf5_version() {
+    unsigned majnum, minnum, relnum;
+    H5get_libversion(&majnum, &minnum, &relnum);
+    std::cout << "HDF5 Version: " << majnum << "." << minnum << "." << relnum << std::endl;
+}
 
-    // Create a file
-    H5::H5File file(fileName, H5F_ACC_TRUNC);
+int main(int argc, char** argv) {
+    MPI_Init(&argc, &argv);
 
-    // Create data to store
-    std::vector<double> data(100, 3.14); // Example data
-    hsize_t dims[1] = {data.size()};
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    // Create a dataset
-    H5::DataSpace dataspace(1, dims);
-    H5::DataSet dataset = file.createDataSet(datasetName, H5::PredType::NATIVE_DOUBLE, dataspace);
+    // Verify MPI
+    std::cout << "Hello from rank " << rank << "/" << size << std::endl;
 
-    // Write data to the dataset
-    dataset.write(data.data(), H5::PredType::NATIVE_DOUBLE);
+    // Verify HDF5
+    if (rank == 0) {
+        check_hdf5_version();
+        std::cout << "HDF5 and MPI are working correctly!" << std::endl;
+    }
 
+    MPI_Finalize();
     return 0;
 }
